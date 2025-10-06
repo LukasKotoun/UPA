@@ -40,6 +40,7 @@ class Product:
     flowering_period: str | None
     height: str | None
     color: str | None
+    contents: str | None
 
     __tsv_store_order = ('name', 
                          'price',
@@ -49,8 +50,8 @@ class Product:
                          'planting_time',
                          'flowering_period',
                          'height',
-                         'color'
-                         # TODO: more specifications
+                         'color',
+                         'contents'
                          )
     def to_tsv_row(self):
         attr_dict = {attr: getattr(self, attr) for attr in self.__tsv_store_order}
@@ -90,7 +91,8 @@ def scrape_product(soup) -> Product:
                    planting_time=specs.get("planting_time", None),
                    flowering_period=specs.get("flowering_period", None),
                    height=specs.get("height", None),
-                   color=specs.get("color", None)
+                   color=specs.get("color", None),
+                   contents=specs.get("contents", None)
                 )
 
 
