@@ -10,18 +10,8 @@ from time import sleep
 
 
 def any_to_tsv(value: Any):
-    str_value = str(value).replace("\t", " ") # TODO: escape sanitization, ...
+    str_value = str(value).replace("\t", " ").replace("\n", " ").replace("\r", " ") # TODO: escape sanitization, ...
     return str_value
-
-
-def to_tsv_colname(name: str):
-    s = name[0].upper() + name[1:]
-    return " ".join(s.split("_"))
-
-
-def to_tsv_header(fields: dict):
-    tsv_header = "\t".join(map(to_tsv_colname, fields))
-    return tsv_header
 
 
 def to_tsv_row(row: dict):
