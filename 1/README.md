@@ -12,7 +12,7 @@ Název: Tuin Zaden EU
 URL: https://tuinzaden.eu/en
 
 ## Sloupce
-| Název | Aktuální cena | Značka | Kolekce | Kategorie | Doba sázení | Období rozkvětu | Výška | Barva |
+| Název | Aktuální cena | Značka | Kolekce | Kategorie | Doba sázení | Období rozkvětu | Výška | Barva | Obsah balení |
 
 ## Poznámky
 Pro spuštění v konzoli bez skriptu **run.sh** je potřeba aktivovat virtuální python prostřední pomocí `source venv/bin/activate`
