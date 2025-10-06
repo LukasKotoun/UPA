@@ -33,10 +33,23 @@ def to_tsv_row(row: dict):
 class Product:
     name: str | None
     price: str | None
-    # ...
+    brand: str | None
+    collection: str | None
+    category: str | None
+    planting_time: str | None
+    flowering_period: str | None
+    height: str | None
+    color: str | None
 
     __tsv_store_order = ('name', 
                          'price',
+                         'brand',
+                         'collection',
+                         'category',
+                         'planting_time',
+                         'flowering_period',
+                         'height',
+                         'color'
                          # TODO: more specifications
                          )
     def to_tsv_row(self):
@@ -70,8 +83,14 @@ def scrape_product(soup) -> Product:
     specs = extract_specs(soup)
     
     return Product(name=name,
-                price=price
-                # TODO: more specifications
+                   price=price,
+                   brand=specs.get("brand", None),
+                   collection=specs.get("collection", None),
+                   category=specs.get("category", None),
+                   planting_time=specs.get("planting_time", None),
+                   flowering_period=specs.get("flowering_period", None),
+                   height=specs.get("height", None),
+                   color=specs.get("color", None)
                 )
 
 
