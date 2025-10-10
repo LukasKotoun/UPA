@@ -16,4 +16,4 @@ URL: https://tuinzaden.eu/en
 
 ## Poznámky
 Pro spuštění v konzoli bez skriptu **run.sh** je potřeba aktivovat virtuální python prostřední pomocí `source venv/bin/activate`
-Prostředí **venv** je vytvořeno scriptem **build.sh**
+Prostředí **venv** je vytvořeno scriptem **build.sh** (`bash build.sh`)
