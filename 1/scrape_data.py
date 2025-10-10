@@ -10,7 +10,7 @@ from time import sleep
 
 
 def any_to_tsv(value: Any):
-    str_value = str(value).replace("\t", " ").replace("\n", " ").replace("\r", " ") # TODO: escape sanitization, ...
+    str_value = str(value).replace("\t", " ").replace("\n", " ").replace("\r", " ")
     return str_value
 
 
@@ -46,10 +46,7 @@ class Product:
     def to_tsv_row(self):
         attr_dict = {attr: getattr(self, attr) for attr in self.__tsv_store_order}
         return to_tsv_row(attr_dict)
-    
-    @classmethod
-    def to_tsv_header(self):
-        return to_tsv_header(self.__tsv_store_order)
+
 
 
 def extract_table_rows(table: element.Tag) -> dict[str, str]:
@@ -99,7 +96,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         product = scrape_product(soup)
         print(url, end="\t")
         print(product.to_tsv_row())
-        sleep(1)
 
     return 0
 
