@@ -97,6 +97,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
         soup = BeautifulSoup(page.text, "html.parser")
         product = scrape_product(soup)
+        print(url, end="\t")
         print(product.to_tsv_row())
         sleep(1)
 
