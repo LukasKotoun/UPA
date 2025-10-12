@@ -1,4 +1,4 @@
-from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client import InfluxDBClient, Point, WritePrecision, BucketsApi
 from influxdb_client.client.write_api import SYNCHRONOUS
 from datetime import datetime
 import pandas as pd
@@ -15,6 +15,19 @@ DB_BUCKET = "SoundDetectorTest"
 
 def create_influx_client():
     return InfluxDBClient(url=DB_URL, token=DB_TOKEN, org=DB_ORG)
+
+def create_bucket_or_clean():
+    client = create_influx_client()
+    buckets_api = BucketsApi(client)
+    bucket = buckets_api.find_bucket_by_name(DB_BUCKET)
+    if not bucket:
+        buckets_api.create_bucket(bucket_name=DB_BUCKET, org=DB_ORG)
+    else:
+        buckets_api.delete_bucket(bucket)
+        buckets_api.create_bucket(bucket_name=DB_BUCKET, org=DB_ORG)
+        
+    client.close()
+
 
 def load_csv(file_path):
     client = create_influx_client()
@@ -48,8 +61,13 @@ def query_data():
       |> group(columns: ["device_name"])
       |> keep(columns: ["_time", "_value", "device_name"])
     '''
+    
+    # InfluxDB analyzuje dotaz a podle časového rozsahu a bucketu vyhledá relevantní shardy v meta store => zjistí které uzly obsahují potřebná data.
+    # Vybrané uzly načtou lokálně data ze svých shardů, aplikují filtry a provádějí agregace a seskupení, částečné výsledky se poté distribuovaně sloučí.
+    # Řídící uzel serializuje finální tabulku obsahující jen požadované sloupce a doručí ji klientovi, který ji může následně použít ve své aplikaci.
     tables = query_api.query(query, org=DB_ORG)
 
+    
     print("Průměrná hodnota energie zvuku za každý den v září roku 2025 podle zařízení:")
     for table in tables:
         for record in table.records:
@@ -60,6 +78,7 @@ def query_data():
 
 
 if __name__ == "__main__":
+    create_bucket_or_clean()
     load_csv(CSV_FILE)
     query_data()
     pass
