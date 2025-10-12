@@ -5,7 +5,8 @@ __pycache__/
 **/*.DS_Store
 # C extensions
 *.so
-
+**./*influxdb
+influxdb/
 # Distribution / packaging
 .Python
 build/
