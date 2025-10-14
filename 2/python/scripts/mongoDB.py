@@ -3,10 +3,10 @@ from pymongo.errors import ConnectionFailure
 import json
 
 # data file path
-GEOJSON_FILE = 'mysliveckehonitby.geojson'
+GEOJSON_FILE = '/app/datasets/mysliveckehonitby.geojson'
 
 # mongo database connection info
-MONGO_URI = "mongodb://admin:admin@localhost:27017/"
+MONGO_URI = "mongodb://admin:admin@mongodb:27017/"
 DB_NAME = "upa_test"
 COLLECTION_NAME = "hunting"
 

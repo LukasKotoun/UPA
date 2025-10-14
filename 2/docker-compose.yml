@@ -1,6 +1,18 @@
-version: '3.9'
-
 services:
+
+  # Python setup
+  python:
+    build:
+      context: ./python
+    container_name: python
+    depends_on:
+      - influxdb
+      - mongo
+      - neo4j
+      - cassandra
+    tty: true
+
+  # DB services
   influxdb:
     image: influxdb:2
     container_name: influxdb
@@ -15,7 +27,6 @@ services:
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-token
     volumes:
       - influx_data:/var/lib/influxdb2
-
   mongo:
     image: mongo:latest
     container_name: mongodb
@@ -27,7 +38,30 @@ services:
       MONGO_INITDB_DATABASE: upa_test
     volumes:
       - mongo_data:/data/db
+  neo4j:
+    image: neo4j:5
+    container_name: neo4jdb
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/admin
+    volumes:
+      - neo4j_data:/data
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandradb
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=localCassandraTest
+      - CASSANDRA_NUM_TOKENS=8
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+
 
 volumes:
   influx_data:
   mongo_data:
+  neo4j_data:
+  cassandra_data:

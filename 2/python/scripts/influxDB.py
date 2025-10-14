@@ -4,10 +4,10 @@ from datetime import datetime
 import pandas as pd
 
 # data file path
-CSV_FILE = 'jalud_cidla.csv'
+CSV_FILE = '/app/datasets/jalud-cidla.csv'
 
 # influx database connection info
-DB_URL = "http://localhost:8086"
+DB_URL = "http://influxdb:8086"
 DB_TOKEN = "my-token"
 DB_ORG = "localInfluxTest"
 DB_BUCKET = "SoundDetectorTest"
