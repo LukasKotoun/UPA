@@ -5,7 +5,7 @@ import pandas as pd
 from pathlib import Path
 
 URI = "bolt://neo4j:7687"
-DRIVER = GraphDatabase.driver(URI, auth=("neo4j", "admin"))
+DRIVER = GraphDatabase.driver(URI, auth=("neo4j", "adminadmin"))
 DATA_FOLDER=Path("/app/datasets/gtfs")
 
 

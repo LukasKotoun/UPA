@@ -33,9 +33,9 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
-      MONGO_INITDB_DATABASE: upa_test
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=upa_test
     volumes:
       - mongo_data:/data/db
   neo4j:
@@ -45,7 +45,7 @@ services:
       - "7474:7474"
       - "7687:7687"
     environment:
-      - NEO4J_AUTH=neo4j/admin
+      - NEO4J_AUTH=neo4j/adminadmin
     volumes:
       - neo4j_data:/data
   cassandra:

@@ -1,5 +1,7 @@
 from cassandra.cluster import Cluster
 from cassandra import ReadTimeout
+from cassandra.query import BatchStatement
+
 import pandas as pd
 import os
 from datetime import datetime
@@ -10,11 +12,11 @@ CSV_FILE = os.path.expanduser('/app/datasets/data-vs-orvr.csv')
 #  cassandra connection info
 KEYSPACE = "vsorvr"
 TABLE = "zaznamy"
-HOSTS = ["127.0.0.1"]
-USERNAME = "cassandra"
-PASSWORD = "cassandra"
+HOSTS = ["cassandradb"]
 
-#  db setup
+#  db setu
+
+
 def create_cluster():
     cluster = Cluster(HOSTS)
     session = cluster.connect()
@@ -48,8 +50,10 @@ def safe_timestamp(val):
 
 # create db schema
 # partition key (klientID), clustering columns (sluzba)
+
+
 def create_table(session):
-    session.execute(f"DROP TABLE IF EXISTS {TABLE};") 
+    session.execute(f"DROP TABLE IF EXISTS {TABLE};")
     session.execute(f"""
         CREATE TABLE IF NOT EXISTS {TABLE} (
             klientID int,
@@ -77,7 +81,6 @@ def create_table(session):
 def load_csv_to_cassandra(session, file_path):
     df = pd.read_csv(file_path, dtype=str, low_memory=False)
 
-
     insert_stmt = session.prepare(f"""
         INSERT INTO {TABLE} (
             klientID, typZaznamu, sluzba, cisloListku, prepazka,
@@ -86,18 +89,18 @@ def load_csv_to_cassandra(session, file_path):
             odchod, odchodPoPreposlani, odchodNeprisel
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """)
-    print("Inserting data into Cassandra...")
-    print('Total records to insert:', len(df))
-    count = 0
-    for row in df.itertuples(index=False):
-        try:
-            session.execute(insert_stmt, (
+
+    for start in range(0, len(df), 100):
+        batch = BatchStatement()
+        for row in df.iloc[start:start + 100].itertuples(index=False):
+            batch.add(insert_stmt, (
                 safe_int(getattr(row, "klientID", None)),
                 safe_int(getattr(row, "typZaznamu", None)),
                 safe_int(getattr(row, "sluzba", None)),
                 safe_int(getattr(row, "cisloListku", None)),
                 safe_int(getattr(row, "prepazka", None)),
-                str(getattr(row, "rezervace", None)) if pd.notna(row.rezervace) else None,
+                str(getattr(row, "rezervace", None)) if pd.notna(
+                    row.rezervace) else None,
                 safe_timestamp(getattr(row, "casRezervace", None)),
                 safe_timestamp(getattr(row, "propadRezervace", None)),
                 safe_timestamp(getattr(row, "prichod", None)),
@@ -109,40 +112,35 @@ def load_csv_to_cassandra(session, file_path):
                 safe_timestamp(getattr(row, "odchodPoPreposlani", None)),
                 safe_timestamp(getattr(row, "odchodNeprisel", None))
             ))
-            count += 1
-
-        except Exception as e:
-            print("Error inserting row:", e)
-            continue
-        print(f"Inserted {count}/{len(df)} records", end='\r')
-
-    print(f"Imported {count} records into {TABLE}.")
+        session.execute(batch)
 
 
-#  SAMPLE QUERY
-def query_sample(session):
+def query_data(session):
     rows = session.execute(f"""SELECT casRezervace, sluzba, prepazka, prichod, odchod
                                 FROM zaznamy
                                 WHERE klientID = 401574;
                                 """)
-    print("\nRetrieve all reservations of a specific client (by klientID):")
+    print("Všechny rezervace pro specifického klienta (ID: 401574):")
     for r in rows:
         print(f"sluzba={r.sluzba}, prichod={r.prichod}, odchod={r.odchod}")
 
-def query_sample1(session):
-    rows = session.execute(f"SELECT * FROM {TABLE} WHERE sluzba = 1 LIMIT 10 ALLOW FILTERING")
-    print("\nSample data:")
+
+def query_data1(session):
+    rows = session.execute(
+        f"SELECT * FROM {TABLE} WHERE sluzba = 1 LIMIT 10 ALLOW FILTERING")
+    print("Data kde se sluzba = 1:")
     for r in rows:
         print(f"klientID={r.klientid}, prichod={r.prichod}, odchod={r.odchod}")
+
 
 def main():
     cluster, session = create_cluster()
     create_keyspace(session)
     create_table(session)
-    
+
     load_csv_to_cassandra(session, CSV_FILE)
-    query_sample(session)
-    query_sample1(session)
+    query_data(session)
+    query_data1(session)
     cluster.shutdown()
 
 
