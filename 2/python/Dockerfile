@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y gcc g++ curl unzip wget && rm -rf /var/
 COPY ./scripts /app/scripts
 RUN mkdir -p /app/datasets
 # Cassandra dataset
-RUN curl https://onlinedata.plzen.eu/data-vs-orvr.php -o /app/datasets/data-vs-arvr.csv
+RUN curl https://onlinedata.plzen.eu/data-vs-orvr.php -o /app/datasets/data-vs-orvr.csv
 # Neo4j dataset
 RUN curl https://jizdnirady.pmdp.cz/jr/gtfs -o /tmp/gtfs.zip && \
     unzip /tmp/gtfs.zip -d /app/datasets/gtfs && \
