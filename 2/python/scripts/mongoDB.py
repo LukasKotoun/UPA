@@ -37,9 +37,11 @@ def load_geojson(file_path, collection):
 def query_data(collection):
     point = {"type": "Point", "coordinates": [13.28946164, 49.76122593]}
 
-    # MongoDB analyzuje dotaz a zkontroluje, zda existují relevantní shardy nebo indexy => v tomto konkrétním případě existuje 2dsphere index.
-    # Příslušné shard uzly nebo collection partitions vyberou dokumenty, které splňují podmínku v $geoIntersects. filtrování probíhá lokálně na každém uzlu.
-    # Výsledky z uzlů jsou seskupeny a odeslány na řídící server, který je serializuje a doručí klientovi. Ten pak iteruje přes dokumenty které splňují podmínku a může je dále zpracovávat.
+    # MongoDB analyzuje dotaz a zkontroluje, zda existují relevantní shardy nebo indexy =>
+    # V tomto konkrétním případě existuje 2dsphere index. (vzhledem k malému datasetu nebyl zvolen žádný shard)
+    # Dotaz se provede přímo na kolekci, využívá se lokální index pro rychlé filtrování.
+    # Výsledky, které splňují podmínku, jsou vráceny klientovi. Klient dostane cursor nad dokumenty s jehož pomocí může iterovat a data zpracovávat.
+
     results = collection.find({
         "geometry": {
             "$geoIntersects": {

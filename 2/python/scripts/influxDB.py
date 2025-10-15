@@ -75,9 +75,11 @@ def query_data():
       |> keep(columns: ["_time", "_value", "device_name"])
     '''
 
-    # InfluxDB analyzuje dotaz a podle časového rozsahu a bucketu vyhledá relevantní shardy v meta store => zjistí které uzly obsahují potřebná data.
-    # Vybrané uzly načtou lokálně data ze svých shardů, aplikují filtry a provádějí agregace a seskupení, částečné výsledky se poté distribuovaně sloučí.
-    # Řídící uzel serializuje finální tabulku obsahující jen požadované sloupce a doručí ji klientovi, který ji může následně použít ve své aplikaci.
+    # InfluxDB engine analyzuje dotaz a zjistí který bucket a jaký časový rozsah je potřeba.
+    # Podle časového rozsahu a bucketu zjistí které uzly obsahují potřebná data => zjistí které TSM soubory jsou potřeba.
+    # V clusterové architektuře vybrané uzly načtou lokálně data ze svých shardů, aplikují filtry a provádějí agregace a seskupení, částečné výsledky se poté sloučí.
+    # Řídící uzel serializuje finální tabulku obsahující jen požadované sloupce a doručí ji klientovi přes HTTP(S) rozhraní.
+    # Aplikace obdrží data deserializovaná do tabulek a iteruje přes záznamy v tabulkách.
     tables = query_api.query(query, org=DB_ORG)
 
     print("Průměrná hodnota energie zvuku za každý den v září roku 2025 podle zařízení:")
