@@ -11,6 +11,8 @@ services:
       - neo4j
       - cassandra
     tty: true
+    volumes:
+      - './python/scripts:/app/scripts'
 
   # DB services
   influxdb:
@@ -45,7 +47,7 @@ services:
       - "7474:7474"
       - "7687:7687"
     environment:
-      - NEO4J_AUTH=neo4j/adminadmin
+      - NEO4J_AUTH=neo4j/password123
     volumes:
       - neo4j_data:/data
   cassandra:

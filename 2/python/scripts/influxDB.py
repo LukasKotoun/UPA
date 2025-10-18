@@ -2,6 +2,8 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision, BucketsApi
 from influxdb_client.client.write_api import SYNCHRONOUS
 from datetime import datetime
 import pandas as pd
+import sys
+from typing import Optional, Sequence
 
 # data file path
 CSV_FILE = '/app/datasets/jalud-cidla.csv'
@@ -37,7 +39,7 @@ def clean_bucket():
     client.close()
 
 
-def load_csv(file_path):
+def load_csv(file_path: str):
     client = create_influx_client()
     write_api = client.write_api(write_options=SYNCHRONOUS)
 
@@ -91,10 +93,19 @@ def query_data():
 
     client.close()
 
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    create_bucket()
+    
+    if (len(argv) > 1 and argv[0] == "--load_data"):
+        clean_bucket()
+        load_csv(CSV_FILE)
+
+    query_data()
+
+    return 0
+
 
 if __name__ == "__main__":
-    create_bucket()
-    # clean_bucket()
-    load_csv(CSV_FILE)
-    query_data()
-    pass
+    sys.exit(main(sys.argv))
+
+

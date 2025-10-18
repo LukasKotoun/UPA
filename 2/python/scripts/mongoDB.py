@@ -1,6 +1,8 @@
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 import json
+import sys
+from typing import Optional, Sequence
 
 # data file path
 GEOJSON_FILE = '/app/datasets/mysliveckehonitby.geojson'
@@ -16,16 +18,19 @@ def create_mongo_connection():
         client = MongoClient(MONGO_URI)
         db = client[DB_NAME]
         collection = db[COLLECTION_NAME]
-        # Clear existing data and create geospatial index for geometry field
-        collection.delete_many({})
-        collection.create_index([("geometry", "2dsphere")])
         return client, db, collection
     except ConnectionFailure:
         print("Server not available")
         return None, None, None
 
 
-def load_geojson(file_path, collection):
+def initial_collection_setup(collection):
+    # Clear existing data and create geospatial index for geometry field
+    collection.delete_many({})
+    collection.create_index([("geometry", "2dsphere")])
+
+
+def load_geojson(file_path: str, collection):
     with open(file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
         if 'features' in data:
@@ -54,14 +59,20 @@ def query_data(collection):
         print("Název: ", r["properties"]["NAZEV"], "HA: ", r["properties"]
               ["VYMERA_HA"] if "VYMERA_HA" in r["properties"] else "N/A")
 
-
-if __name__ == "__main__":
+def main(argv: Optional[Sequence[str]] = None) -> int:
     client, db, collection = create_mongo_connection()
     if (client is None or db is None or collection is None):
         print("Failed to connect to the database.")
         exit(1)
 
-    load_geojson(GEOJSON_FILE, collection)
+    if (len(argv) > 1 and argv[1] == "--load_data"):
+        initial_collection_setup(collection)
+        load_geojson(GEOJSON_FILE, collection)
+
     query_data(collection)
     client.close()
-    pass
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
+    

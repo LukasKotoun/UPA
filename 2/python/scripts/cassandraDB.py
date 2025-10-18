@@ -4,18 +4,28 @@ from cassandra.query import BatchStatement
 
 import pandas as pd
 import os
+import sys
+from typing import Optional, Sequence
 from datetime import datetime
+from pathlib import Path
 
 #  data file path
 CSV_FILE = os.path.expanduser('/app/datasets/data-vs-orvr.csv')
+FLAG_FILE = Path("/app/datasets/.loaded")
 
 #  cassandra connection info
 KEYSPACE = "vsorvr"
 TABLE = "zaznamy"
+<<<<<<< Updated upstream
 HOSTS = ["cassandradb"]
 
 #  db setu
 
+=======
+HOSTS = ["cassandra"]
+USERNAME = "cassandra"
+PASSWORD = "cassandra"
+>>>>>>> Stashed changes
 
 def create_cluster():
     cluster = Cluster(HOSTS)
@@ -78,7 +88,7 @@ def create_table(session):
 
 
 #  data import
-def load_csv_to_cassandra(session, file_path):
+def load_csv_to_cassandra(session, file_path: str):
     df = pd.read_csv(file_path, dtype=str, low_memory=False)
 
     insert_stmt = session.prepare(f"""
@@ -132,17 +142,20 @@ def query_data1(session):
     for r in rows:
         print(f"klientID={r.klientid}, prichod={r.prichod}, odchod={r.odchod}")
 
-
-def main():
+def main(argv: Optional[Sequence[str]] = None) -> int:
     cluster, session = create_cluster()
     create_keyspace(session)
-    create_table(session)
+    
+    if (len(argv) > 1 and argv[1] == "--load_data"):
+        create_table(session)
+        load_csv_to_cassandra(session, CSV_FILE)
 
-    load_csv_to_cassandra(session, CSV_FILE)
-    query_data(session)
-    query_data1(session)
+    query_sample(session)
+    query_sample1(session)
     cluster.shutdown()
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main(sys.argv))

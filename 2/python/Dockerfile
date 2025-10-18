@@ -1,9 +1,10 @@
 FROM python:3.11-slim
 
+# Install python and DB dependencies
 RUN pip install --no-cache-dir cassandra-driver pymongo neo4j influxdb-client pandas
 RUN apt-get update && apt-get install -y gcc g++ curl unzip wget && rm -rf /var/lib/apt/lists/*
 
-COPY ./scripts /app/scripts
+## Load the datasets ##
 RUN mkdir -p /app/datasets
 # Cassandra dataset
 RUN curl https://onlinedata.plzen.eu/data-vs-orvr.php -o /app/datasets/data-vs-orvr.csv
