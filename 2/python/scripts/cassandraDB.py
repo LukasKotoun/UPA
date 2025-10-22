@@ -16,16 +16,7 @@ FLAG_FILE = Path("/app/datasets/.loaded")
 #  cassandra connection info
 KEYSPACE = "vsorvr"
 TABLE = "zaznamy"
-<<<<<<< Updated upstream
-HOSTS = ["cassandradb"]
-
-#  db setu
-
-=======
 HOSTS = ["cassandra"]
-USERNAME = "cassandra"
-PASSWORD = "cassandra"
->>>>>>> Stashed changes
 
 def create_cluster():
     cluster = Cluster(HOSTS)

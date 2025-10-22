@@ -41,23 +41,45 @@ def load_geojson(file_path: str, collection):
 
 def query_data(collection):
     point = {"type": "Point", "coordinates": [13.28946164, 49.76122593]}
-
-    # MongoDB analyzuje dotaz a zkontroluje, zda existují relevantní shardy nebo indexy =>
-    # V tomto konkrétním případě existuje 2dsphere index. (vzhledem k malému datasetu nebyl zvolen žádný shard)
-    # Dotaz se provede přímo na kolekci, využívá se lokální index pro rychlé filtrování.
-    # Výsledky, které splňují podmínku, jsou vráceny klientovi. Klient dostane cursor nad dokumenty s jehož pomocí může iterovat a data zpracovávat.
-
-    results = collection.find({
-        "geometry": {
-            "$geoIntersects": {
-                "$geometry": point
+    pipeline = [
+        {
+            "$geoNear": {
+                "near": point,
+                "distanceField": "distance_m",
+                "maxDistance": 5000,
+                "spherical": True,
+                "query": {}
+            }
+        },
+        {
+            "$group": {
+                "_id": "$properties.NAZEV",
+                "distance_m": {"$first": "$distance_m"},
+                "hectars": {"$first": "$properties.VYMERA_HA"},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "NAZEV": "$_id",
+                "VZDALENOST_KM": {"$round": [{"$divide": ["$distance_m", 1000]}, 3]},
+                "VYMERA_KM": {"$divide": ["$hectars", 100]}
             }
         }
-    })
-    print("Honitby obsahující bod [13.28946164, 49.76122593]:")
+    ]
+
+    # Pipeline začíná v $geoNear který vyžaduje 2dsphere index na geometrii, který jsme vytvořili při načítání dat.
+    # Dotaz začíná spuštěním $geoNear, který efektivně využívá index pro rychlé filtrování dat podle vzdálenosti.
+    # Následuje fáze $group, která seskupí dokumenty podle názvu honitby, čímž se eliminují duplicity jestliže má honitba více záznamů.
+    # Výsledky jsou transformovány přes $project (výpočet km se zaokrouhlením na 3 desetinná místa, extrakce názvu a km2).
+    # Klient dostane Agregační Cursor nad finálním datovým proudem.
+
+    results = collection.aggregate(pipeline)
+    print(f"Hledám honitby do 5 km od bodu: {point['coordinates']}")
     for r in results:
-        print("Název: ", r["properties"]["NAZEV"], "HA: ", r["properties"]
-              ["VYMERA_HA"] if "VYMERA_HA" in r["properties"] else "N/A")
+        print("Název: ", r["NAZEV"], "Vzdálenost: ",
+              r["VZDALENOST_KM"], "km", "Výmera: ", r["VYMERA_KM"], "km^2")
+
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     client, db, collection = create_mongo_connection()
@@ -75,4 +97,3 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
-    
