@@ -3,9 +3,10 @@ from pymongo.errors import ConnectionFailure
 import json
 import sys
 from typing import Optional, Sequence
+from pathlib import Path
 
 # data file path
-GEOJSON_FILE = '/app/datasets/mysliveckehonitby.geojson'
+GEOJSON_FILE = Path("/app/datasets/mysliveckehonitby.geojson")
 
 # mongo database connection info
 MONGO_URI = "mongodb://admin:admin@mongodb:27017/"

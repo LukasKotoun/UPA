@@ -4,9 +4,10 @@ from datetime import datetime
 import pandas as pd
 import sys
 from typing import Optional, Sequence
+from pathlib import Path
 
 # data file path
-CSV_FILE = '/app/datasets/jalud-cidla.csv'
+CSV_FILE = Path("/app/datasets/jalud-cidla.csv")
 
 # influx database connection info
 DB_URL = "http://influxdb:8086"
@@ -42,24 +43,24 @@ def clean_bucket():
 def load_csv(file_path: str):
     client = create_influx_client()
     write_api = client.write_api(write_options=SYNCHRONOUS)
-
     df = pd.read_csv(file_path)
     df.columns = ['id', 'serial_number', 'device_name',
                   'time', 'ambient_energy', 'max_energy', 'min_energy']
-    
+
     # influxdb creates schema automatically based on the first write
-    points = [
-        Point("sound_measurement")
-        .tag("serial_number", str(row.serial_number))
-        .tag("device_name", row.device_name)
-        .field("energy", float(row.ambient_energy))
-        .field("max_energy", float(row.max_energy))
-        .field("min_energy", float(row.min_energy))
-        .time(datetime.strptime(row.time, "%Y-%m-%d %H:%M:%S"), WritePrecision.S)
-        for row in df.itertuples(index=False)
-    ]
-    
-    write_api.write(bucket=DB_BUCKET, org=DB_ORG, record=points)
+    for start in range(0, len(df), 30000):
+        batch = df.iloc[start:start + 30000]
+        points = [
+            Point("sound_measurement")
+            .tag("serial_number", str(row.serial_number))
+            .tag("device_name", row.device_name)
+            .field("energy", float(row.ambient_energy))
+            .field("max_energy", float(row.max_energy))
+            .field("min_energy", float(row.min_energy))
+            .time(datetime.strptime(row.time, "%Y-%m-%d %H:%M:%S"), WritePrecision.S)
+            for row in batch.itertuples(index=False)
+        ]
+        write_api.write(bucket=DB_BUCKET, org=DB_ORG, record=points)
 
     client.close()
 
@@ -76,6 +77,7 @@ def query_data():
       |> group(columns: ["device_name"])
       |> keep(columns: ["_time", "_value", "device_name"])
     '''
+
     tables = query_api.query(query, org=DB_ORG)
 
     print("Průměrná hodnota energie zvuku za každý den v září roku 2025 podle zařízení:")
@@ -87,9 +89,10 @@ def query_data():
 
     client.close()
 
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     create_bucket()
-    
+
     if (len(argv) > 1 and argv[0] == "--load_data"):
         clean_bucket()
         load_csv(CSV_FILE)
@@ -101,5 +104,3 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
-
-
