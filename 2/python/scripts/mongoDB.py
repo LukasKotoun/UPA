@@ -68,14 +68,8 @@ def query_data(collection):
         }
     ]
 
-    # Pipeline začíná v $geoNear který vyžaduje 2dsphere index na geometrii, který jsme vytvořili při načítání dat.
-    # Dotaz začíná spuštěním $geoNear, který efektivně využívá index pro rychlé filtrování dat podle vzdálenosti.
-    # Následuje fáze $group, která seskupí dokumenty podle názvu honitby, čímž se eliminují duplicity jestliže má honitba více záznamů.
-    # Výsledky jsou transformovány přes $project (výpočet km se zaokrouhlením na 3 desetinná místa, extrakce názvu a km2).
-    # Klient dostane Agregační Cursor nad finálním datovým proudem.
-
     results = collection.aggregate(pipeline)
-    print(f"Hledám honitby do 5 km od bodu: {point['coordinates']}")
+    print(f"Honitby do 5 km od bodu: {point['coordinates']}")
     for r in results:
         print("Název: ", r["NAZEV"], "Vzdálenost: ",
               r["VZDALENOST_KM"], "km", "Výmera: ", r["VYMERA_KM"], "km^2")
