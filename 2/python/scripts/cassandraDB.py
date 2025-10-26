@@ -14,7 +14,7 @@ CSV_FILE = os.path.expanduser('/app/datasets/data-vs-orvr.csv')
 FLAG_FILE = Path("/app/datasets/.loaded")
 
 #  cassandra connection info
-KEYSPACE = "vsorvr"
+KEYSPACE = "cassandratest"
 TABLE = "zaznamy"
 HOSTS = ["cassandra"]
 
@@ -73,7 +73,7 @@ def create_table(session):
             odchod timestamp,
             odchodPoPreposlani timestamp,
             odchodNeprisel timestamp,
-            PRIMARY KEY ((klientID), sluzba)
+            PRIMARY KEY ((sluzba), klientID)
         );
     """)
 
@@ -116,22 +116,30 @@ def load_csv_to_cassandra(session, file_path: str):
         session.execute(batch)
 
 
-def query_data(session):
-    rows = session.execute(f"""SELECT casRezervace, sluzba, prepazka, prichod, odchod
+# first query ilustrating efecctiveness of cassandra primary key design
+def query_sample(session):
+    rows = session.execute(f"""SELECT klientid, prepazka, prichod, odchod, rezervace
                                 FROM zaznamy
-                                WHERE klientID = 401574;
+                                WHERE sluzba = 4 LIMIT 20;
                                 """)
-    print("Všechny rezervace pro specifického klienta (ID: 401574):")
+    print("Prvních 20 záznamů pro službu 4, seřazeno podle klientID (clustering key):")
+    print("\nklient   | přepážka |        příchod      |        odchod       | rezervace")
+    print("----------------------------------------------------------------------------")
     for r in rows:
-        print(f"sluzba={r.sluzba}, prichod={r.prichod}, odchod={r.odchod}")
+        print(f"{r.klientid}  |     {r.prepazka}   | {r.prichod} | {r.odchod} |     {r.rezervace}")
+        
 
-
-def query_data1(session):
-    rows = session.execute(
-        f"SELECT * FROM {TABLE} WHERE sluzba = 1 LIMIT 10 ALLOW FILTERING")
-    print("Data kde se sluzba = 1:")
+# second query illustrating ALLOW FILTERING usage - nonefficient way of querying
+def query_sample1(session):
+    rows = session.execute(f"""SELECT klientid, prepazka, prichod, odchod, rezervace
+                                FROM zaznamy
+                                WHERE sluzba = 21 AND klientid > 3617628 and prichod > '2025-10-07 00:00:00' ALLOW FILTERING;
+                                """)
+    print("\n\nVšechny záznamy pro službu 21 s klientským ID vyšším 3617628 a příchodem po 2025-10-07 00:00:00:")
+    print("\nklient   | přepážka |        příchod      |        odchod       | rezervace")
+    print("----------------------------------------------------------------------------")
     for r in rows:
-        print(f"klientID={r.klientid}, prichod={r.prichod}, odchod={r.odchod}")
+        print(f"{r.klientid}  |     {r.prepazka}   | {r.prichod} | {r.odchod} |     {r.rezervace}")
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     cluster, session = create_cluster()
